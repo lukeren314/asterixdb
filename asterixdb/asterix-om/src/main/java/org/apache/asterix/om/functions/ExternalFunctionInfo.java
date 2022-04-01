@@ -58,6 +58,13 @@ public class ExternalFunctionInfo extends FunctionInfo implements IExternalFunct
         this.nullCall = nullCall;
     }
 
+    public ExternalFunctionInfo(IExternalFunctionInfo finfo, List<String> externalIdentifier) {
+        this(finfo.getFunctionIdentifier(), finfo.getKind(), finfo.getParameterTypes(),
+                finfo.getReturnType(), finfo.getResultTypeComputer(), finfo.getLanguage(),
+                finfo.getLibraryDataverseName(), finfo.getLibraryName(), externalIdentifier, finfo.getResources(),
+                finfo.isFunctional(), finfo.getNullCall());
+    }
+
     @Override
     public FunctionKind getKind() {
         return kind;

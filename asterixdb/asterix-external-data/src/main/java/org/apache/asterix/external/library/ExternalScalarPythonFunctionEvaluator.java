@@ -49,111 +49,23 @@ import org.msgpack.core.buffer.ArrayBufferInput;
 
 class ExternalScalarPythonFunctionEvaluator extends ExternalScalarFunctionEvaluator {
 
-    private final PythonLibraryEvaluator libraryEvaluator;
+    private final ExternalPythonFunctionEvaluator externalPythonFunctionEvaluator;
 
-    private final ArrayBackedValueStorage resultBuffer = new ArrayBackedValueStorage();
-    private final ByteBuffer argHolder;
-    private final ByteBuffer outputWrapper;
-    private final IEvaluatorContext evaluatorContext;
-
-    private final IPointable[] argValues;
-    private final SourceLocation sourceLocation;
-
-    private MessageUnpacker unpacker;
-    private ArrayBufferInput unpackerInput;
-    private MessageUnpackerToADM unpackerToADM;
-
-    private long fnId;
+    private final long fnId;
 
     ExternalScalarPythonFunctionEvaluator(IExternalFunctionInfo finfo, IScalarEvaluatorFactory[] args,
-            IAType[] argTypes, IEvaluatorContext ctx, SourceLocation sourceLoc) throws HyracksDataException {
+                                          IAType[] argTypes, IEvaluatorContext ctx, SourceLocation sourceLoc) throws HyracksDataException {
         super(finfo, args, argTypes, ctx);
+        externalPythonFunctionEvaluator = new ExternalPythonFunctionEvaluator(finfo, args, ctx, sourceLoc);
         try {
-            PythonLibraryEvaluatorFactory evaluatorFactory = new PythonLibraryEvaluatorFactory(ctx.getTaskContext());
-            this.libraryEvaluator = evaluatorFactory.getEvaluator(finfo, sourceLoc);
-            this.fnId = libraryEvaluator.initialize(finfo);
+            fnId = externalPythonFunctionEvaluator.initialize(finfo);
         } catch (IOException | AsterixException e) {
-            throw new HyracksDataException("Failed to initialize Python", e);
+            throw new HyracksDataException("Failed to initialize Python function", e);
         }
-        argValues = new IPointable[args.length];
-        for (int i = 0; i < argValues.length; i++) {
-            argValues[i] = VoidPointable.FACTORY.createPointable();
-        }
-        //TODO: these should be dynamic. this static size picking is a temporary bodge until this works like
-        //      v-size frames do or these construction buffers are removed entirely
-        int maxArgSz = ExternalDataUtils.getArgBufferSize();
-        this.argHolder = ByteBuffer.wrap(new byte[maxArgSz]);
-        this.outputWrapper = ByteBuffer.wrap(new byte[maxArgSz]);
-        this.evaluatorContext = ctx;
-        this.sourceLocation = sourceLoc;
-        this.unpackerInput = new ArrayBufferInput(new byte[0]);
-        this.unpacker = MessagePack.newDefaultUnpacker(unpackerInput);
-        this.unpackerToADM = new MessageUnpackerToADM();
     }
 
     @Override
     public void evaluate(IFrameTupleReference tuple, IPointable result) throws HyracksDataException {
-        argHolder.clear();
-        boolean nullCall = finfo.getNullCall();
-        boolean hasNullArg = false;
-        for (int i = 0, ln = argEvals.length; i < ln; i++) {
-            argEvals[i].evaluate(tuple, argValues[i]);
-            if (!nullCall) {
-                byte[] argBytes = argValues[i].getByteArray();
-                int argStart = argValues[i].getStartOffset();
-                ATypeTag argType = ATYPETAGDESERIALIZER.deserialize(argBytes[argStart]);
-                if (argType == ATypeTag.MISSING) {
-                    PointableHelper.setMissing(result);
-                    return;
-                } else if (argType == ATypeTag.NULL) {
-                    hasNullArg = true;
-                }
-            }
-        }
-        if (!nullCall && hasNullArg) {
-            PointableHelper.setNull(result);
-            return;
-        }
-        try {
-            ByteBuffer res = libraryEvaluator.callPython(fnId, argTypes, argValues, nullCall);
-            resultBuffer.reset();
-            wrap(res, resultBuffer.getDataOutput());
-        } catch (Exception e) {
-            throw new HyracksDataException("Error evaluating Python UDF", e);
-        }
-        result.set(resultBuffer);
-    }
-
-    private void wrap(ByteBuffer resultWrapper, DataOutput out) throws HyracksDataException {
-        //TODO: output wrapper needs to grow with result wrapper
-        outputWrapper.clear();
-        outputWrapper.position(0);
-        try {
-            if (resultWrapper == null) {
-                out.writeByte(ATypeTag.SERIALIZED_NULL_TYPE_TAG);
-                return;
-            }
-            if ((resultWrapper.get() ^ FIXARRAY_PREFIX) != (byte) 2) {
-                throw HyracksDataException
-                        .create(AsterixException.create(ErrorCode.EXTERNAL_UDF_PROTO_RETURN_EXCEPTION));
-            }
-            int numresults = resultWrapper.get() ^ FIXARRAY_PREFIX;
-            if (numresults > 0) {
-                unpackerToADM.unpack(resultWrapper, out, true);
-            }
-            unpackerInput.reset(resultWrapper.array(), resultWrapper.position() + resultWrapper.arrayOffset(),
-                    resultWrapper.remaining());
-            unpacker.reset(unpackerInput);
-            int numErrors = unpacker.unpackArrayHeader();
-            for (int j = 0; j < numErrors; j++) {
-                out.writeByte(ATypeTag.SERIALIZED_NULL_TYPE_TAG);
-                if (evaluatorContext.getWarningCollector().shouldWarn()) {
-                    evaluatorContext.getWarningCollector().warn(
-                            Warning.of(sourceLocation, ErrorCode.EXTERNAL_UDF_EXCEPTION, unpacker.unpackString()));
-                }
-            }
-        } catch (IOException e) {
-            throw HyracksDataException.create(e);
-        }
+        externalPythonFunctionEvaluator.callPython(fnId, argTypes, argEvals, tuple, result, finfo.getNullCall());
     }
 }
