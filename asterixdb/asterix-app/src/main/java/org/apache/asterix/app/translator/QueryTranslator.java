@@ -2925,6 +2925,14 @@ public class QueryTranslator extends AbstractLangTranslator implements IStatemen
                 String functionKind =
                         cfs.getIsAggregate() ? FunctionKind.AGGREGATE.toString() : FunctionKind.SCALAR.toString();
 
+                Function realAggFunction = new Function(
+                        new FunctionSignature(functionSignature.getDataverseName(),
+                                "agg-" + functionSignature.getName(), functionSignature.getArity()),
+                        paramNames, paramTypes, returnTypeSignature, null, functionKind, library.getLanguage(),
+                        libraryDataverseName, libraryName, externalIdentifier, cfs.getNullCall(),
+                        cfs.getDeterministic(), cfs.getResources(), dependencies);
+                MetadataManager.INSTANCE.addFunction(mdTxnCtx, realAggFunction);
+
                 function = new Function(functionSignature, paramNames, paramTypes, returnTypeSignature, null,
                         functionKind, library.getLanguage(), libraryDataverseName, libraryName, externalIdentifier,
                         cfs.getNullCall(), cfs.getDeterministic(), cfs.getResources(), dependencies);

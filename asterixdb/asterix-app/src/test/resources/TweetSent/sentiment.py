@@ -32,3 +32,17 @@ class TweetSent(object):
         if args is None:
             return 2
         return self.pipeline.predict([args])[0].item()
+
+
+class Count(object):
+
+    count = 0
+    def init(self):
+        return
+
+    def step(self, arg):
+        self.count = self.count +1
+        return self.count
+
+    def finish(self):
+        return self.count

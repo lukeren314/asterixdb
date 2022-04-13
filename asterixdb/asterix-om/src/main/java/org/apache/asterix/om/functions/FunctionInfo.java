@@ -29,15 +29,18 @@ import org.apache.hyracks.algebricks.core.algebra.functions.IFunctionInfo;
 
 public abstract class FunctionInfo implements IFunctionInfo {
     private static final long serialVersionUID = 5460606629941107899L;
+    protected final boolean isPrivate;
 
     private final FunctionIdentifier functionIdentifier;
     private final transient IResultTypeComputer typeComputer;
     private final boolean isFunctional;
 
-    public FunctionInfo(FunctionIdentifier functionIdentifier, IResultTypeComputer typeComputer, boolean isFunctional) {
+    public FunctionInfo(FunctionIdentifier functionIdentifier, IResultTypeComputer typeComputer, boolean isFunctional,
+            boolean isPrivate) {
         this.functionIdentifier = Objects.requireNonNull(functionIdentifier);
         this.typeComputer = typeComputer;
         this.isFunctional = isFunctional;
+        this.isPrivate = isPrivate;
     }
 
     @Override
@@ -67,5 +70,10 @@ public abstract class FunctionInfo implements IFunctionInfo {
     @Override
     public String toString() {
         return functionIdentifier.toString();
+    }
+
+    @Override
+    public boolean isPrivate() {
+        return isPrivate;
     }
 }

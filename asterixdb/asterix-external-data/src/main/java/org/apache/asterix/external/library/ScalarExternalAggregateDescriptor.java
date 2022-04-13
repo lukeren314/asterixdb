@@ -18,18 +18,12 @@
  */
 package org.apache.asterix.external.library;
 
-import org.apache.asterix.om.functions.*;
+import org.apache.asterix.om.functions.IExternalFunctionDescriptor;
+import org.apache.asterix.om.functions.IExternalFunctionInfo;
+import org.apache.asterix.om.functions.IFunctionDescriptorFactory;
 import org.apache.asterix.om.types.IAType;
 import org.apache.asterix.runtime.aggregates.scalar.AbstractScalarAggregateDescriptor;
-import org.apache.asterix.runtime.unnestingfunctions.std.ScanCollectionDescriptor;
-import org.apache.hyracks.algebricks.common.exceptions.AlgebricksException;
 import org.apache.hyracks.algebricks.core.algebra.functions.FunctionIdentifier;
-import org.apache.hyracks.algebricks.runtime.base.IAggregateEvaluatorFactory;
-import org.apache.hyracks.algebricks.runtime.base.IEvaluatorContext;
-import org.apache.hyracks.algebricks.runtime.base.IScalarEvaluator;
-import org.apache.hyracks.algebricks.runtime.base.IScalarEvaluatorFactory;
-import org.apache.hyracks.algebricks.runtime.evaluators.ColumnAccessEvalFactory;
-import org.apache.hyracks.api.exceptions.HyracksDataException;
 
 public class ScalarExternalAggregateDescriptor extends AbstractScalarAggregateDescriptor
         implements IExternalFunctionDescriptor {

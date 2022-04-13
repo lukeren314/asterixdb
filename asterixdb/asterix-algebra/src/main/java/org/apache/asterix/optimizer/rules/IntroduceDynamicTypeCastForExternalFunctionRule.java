@@ -72,6 +72,11 @@ public class IntroduceDynamicTypeCastForExternalFunctionRule implements IAlgebra
         if (BuiltinFunctions.getBuiltinFunctionInfo(funcCallExpr.getFunctionIdentifier()) != null) {
             return changed;
         }
+        // if the function is an aggregate, skip.
+        if (((ExternalFunctionInfo) funcCallExpr.getFunctionInfo())
+                .getKind() == AbstractFunctionCallExpression.FunctionKind.AGGREGATE) {
+            return changed;
+        }
         IAType inputType;
         IAType reqArgType;
         boolean castFlag;

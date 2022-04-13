@@ -38,6 +38,6 @@ public class ExternalScalarFunctionInfo extends ExternalFunctionInfo {
             String libraryName, List<String> externalIdentifier, Map<String, String> resources, boolean deterministic,
             boolean nullCall) {
         super(fid, FunctionKind.SCALAR, parameterTypes, returnType, rtc, language, libraryDataverseName, libraryName,
-                externalIdentifier, resources, deterministic, nullCall);
+                externalIdentifier, resources, deterministic, nullCall, false);
     }
 }

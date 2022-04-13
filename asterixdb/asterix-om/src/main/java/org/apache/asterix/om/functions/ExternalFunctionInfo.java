@@ -30,7 +30,7 @@ import org.apache.hyracks.algebricks.core.algebra.functions.FunctionIdentifier;
 
 public class ExternalFunctionInfo extends FunctionInfo implements IExternalFunctionInfo {
 
-    private static final long serialVersionUID = 5L;
+    private static final long serialVersionUID = 6L;
 
     private final FunctionKind kind;
     private final List<IAType> parameterTypes;
@@ -45,8 +45,8 @@ public class ExternalFunctionInfo extends FunctionInfo implements IExternalFunct
     public ExternalFunctionInfo(FunctionIdentifier fid, FunctionKind kind, List<IAType> parameterTypes,
             IAType returnType, IResultTypeComputer rtc, ExternalFunctionLanguage language,
             DataverseName libraryDataverseName, String libraryName, List<String> externalIdentifier,
-            Map<String, String> resources, boolean deterministic, boolean nullCall) {
-        super(fid, rtc, deterministic);
+            Map<String, String> resources, boolean deterministic, boolean nullCall, boolean isPrivate) {
+        super(fid, rtc, deterministic, isPrivate);
         this.kind = kind;
         this.parameterTypes = parameterTypes;
         this.returnType = returnType;
@@ -107,5 +107,10 @@ public class ExternalFunctionInfo extends FunctionInfo implements IExternalFunct
     @Override
     public boolean getNullCall() {
         return nullCall;
+    }
+
+    @Override
+    public boolean isPrivate() {
+        return super.isPrivate();
     }
 }

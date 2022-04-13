@@ -25,15 +25,9 @@ import org.apache.hyracks.algebricks.core.algebra.functions.FunctionIdentifier;
 public final class BuiltinFunctionInfo extends FunctionInfo {
     private static final long serialVersionUID = -6013109889177637590L;
 
-    private final boolean isPrivate;
-
     public BuiltinFunctionInfo(FunctionIdentifier fi, IResultTypeComputer typeComputer, boolean isFunctional,
             boolean isPrivate) {
-        super(fi, typeComputer, isFunctional);
-        this.isPrivate = isPrivate;
+        super(fi, typeComputer, isFunctional, isPrivate);
     }
 
-    public boolean isPrivate() {
-        return isPrivate;
-    }
 }

@@ -25,7 +25,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.asterix.metadata.declared.MetadataProvider;
 import org.apache.asterix.om.functions.BuiltinFunctions;
+import org.apache.asterix.optimizer.base.FunctionUtils;
 import org.apache.commons.lang3.mutable.Mutable;
 import org.apache.commons.lang3.mutable.MutableObject;
 import org.apache.hyracks.algebricks.common.exceptions.AlgebricksException;
@@ -248,7 +250,8 @@ public class PushAggregateIntoNestedSubplanRule implements IAlgebraicRewriteRule
         switch (expr.getExpressionTag()) {
             case FUNCTION_CALL:
                 AbstractFunctionCallExpression fce = (AbstractFunctionCallExpression) expr;
-                FunctionIdentifier fi = BuiltinFunctions.getAggregateFunction(fce.getFunctionIdentifier());
+                FunctionIdentifier fi =
+                        FunctionUtils.getBuiltinAggOrUDF(fce, (MetadataProvider) context.getMetadataProvider());
                 if (fi != null) {
                     ILogicalExpression a1 = fce.getArguments().get(0).getValue();
                     if (a1.getExpressionTag() == LogicalExpressionTag.VARIABLE) {
@@ -258,8 +261,8 @@ public class PushAggregateIntoNestedSubplanRule implements IAlgebraicRewriteRule
                             ILogicalExpression varExpr = aggregateExprToVarExpr.get(expr);
                             if (varExpr == null) {
                                 LogicalVariable newVar = context.newVar();
-                                AggregateFunctionCallExpression aggFun =
-                                        BuiltinFunctions.makeAggregateFunctionExpression(fi, fce.getArguments());
+                                AggregateFunctionCallExpression aggFun = FunctionUtils.getBuiltinAggExprOrUDF(fi,
+                                        fce.getArguments(), (MetadataProvider) context.getMetadataProvider());
                                 aggFun.setSourceLocation(expr.getSourceLocation());
                                 rewriteAggregateInNestedSubplan(argVar, nspOp, aggFun, newVar, context);
                                 VariableReferenceExpression newVarExpr = new VariableReferenceExpression(newVar);
@@ -302,8 +305,9 @@ public class PushAggregateIntoNestedSubplanRule implements IAlgebraicRewriteRule
                 if (v.equals(oldAggVar)) {
                     AbstractFunctionCallExpression oldAggExpr =
                             (AbstractFunctionCallExpression) aggOp.getExpressions().get(i).getValue();
-                    AggregateFunctionCallExpression newAggFun = BuiltinFunctions
-                            .makeAggregateFunctionExpression(aggFun.getFunctionIdentifier(), new ArrayList<>());
+                    AggregateFunctionCallExpression newAggFun =
+                            FunctionUtils.getBuiltinAggExprOrUDF(aggFun.getFunctionIdentifier(), new ArrayList<>(),
+                                    (MetadataProvider) context.getMetadataProvider());
                     newAggFun.setSourceLocation(oldAggExpr.getSourceLocation());
                     List<Mutable<ILogicalExpression>> oldAggArgs = oldAggExpr.getArguments();
                     for (Mutable<ILogicalExpression> arg : oldAggArgs) {

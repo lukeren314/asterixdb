@@ -23,8 +23,10 @@ import java.util.List;
 import org.apache.asterix.common.api.IApplicationContext;
 import org.apache.asterix.common.config.CompilerProperties;
 import org.apache.asterix.common.functions.FunctionDescriptorTag;
+import org.apache.asterix.common.functions.FunctionSignature;
 import org.apache.asterix.external.library.ExternalFunctionDescriptorProvider;
 import org.apache.asterix.metadata.declared.MetadataProvider;
+import org.apache.asterix.metadata.entities.Function;
 import org.apache.asterix.om.functions.BuiltinFunctions;
 import org.apache.asterix.om.functions.IExternalFunctionInfo;
 import org.apache.asterix.om.functions.IFunctionDescriptor;
@@ -66,7 +68,14 @@ public class QueryLogicalExpressionJobGen implements ILogicalExpressionJobGen {
             IVariableTypeEnvironment env, IOperatorSchema[] inputSchemas, JobGenContext context)
             throws AlgebricksException {
         IScalarEvaluatorFactory[] args = codegenArguments(expr, env, inputSchemas, context);
-        IFunctionDescriptor fd = resolveFunction(expr, env, context);
+        IFunctionDescriptor fd;
+        Function uda = ((MetadataProvider) context.getMetadataProvider())
+                .lookupUserDefinedFunction(new FunctionSignature(expr.getFunctionIdentifier()));
+        if (uda != null) {
+            fd = ExternalFunctionDescriptorProvider.resolveExternalFunction(expr, env, context);
+        } else {
+            fd = resolveFunction(expr, env, context);
+        }
         switch (fd.getFunctionDescriptorTag()) {
             case SERIALAGGREGATE:
                 return null;

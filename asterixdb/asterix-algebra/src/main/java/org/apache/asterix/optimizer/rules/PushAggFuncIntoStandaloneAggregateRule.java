@@ -22,7 +22,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.asterix.lang.sqlpp.util.SqlppVariableUtil;
+import org.apache.asterix.metadata.declared.MetadataProvider;
 import org.apache.asterix.om.functions.BuiltinFunctions;
+import org.apache.asterix.optimizer.base.FunctionUtils;
 import org.apache.commons.lang3.mutable.Mutable;
 import org.apache.commons.lang3.mutable.MutableObject;
 import org.apache.hyracks.algebricks.common.exceptions.AlgebricksException;
@@ -66,7 +68,6 @@ public class PushAggFuncIntoStandaloneAggregateRule implements IAlgebraicRewrite
             return false;
         }
         AssignOperator assignOp = (AssignOperator) op;
-
         Mutable<ILogicalOperator> opRef2 = op.getInputs().get(0);
         AbstractLogicalOperator op2 = (AbstractLogicalOperator) opRef2.getValue();
         if (op2.getOperatorTag() == LogicalOperatorTag.AGGREGATE) {
@@ -196,7 +197,7 @@ public class PushAggFuncIntoStandaloneAggregateRule implements IAlgebraicRewrite
                 continue;
             }
             assignScalarAggExprRefs.clear();
-            findScalarAggFuncExprRef(assignOp.getExpressions(), aggVar, assignScalarAggExprRefs);
+            findScalarAggFuncExprRef(assignOp.getExpressions(), aggVar, assignScalarAggExprRefs, context);
             if (assignScalarAggExprRefs.isEmpty()) {
                 continue;
             }
@@ -208,8 +209,8 @@ public class PushAggFuncIntoStandaloneAggregateRule implements IAlgebraicRewrite
             for (Mutable<ILogicalExpression> assignScalarAggExprRef : assignScalarAggExprRefs) {
                 AbstractFunctionCallExpression assignScalarAggExpr =
                         (AbstractFunctionCallExpression) assignScalarAggExprRef.getValue();
-                FunctionIdentifier aggFuncIdent =
-                        BuiltinFunctions.getAggregateFunction(assignScalarAggExpr.getFunctionIdentifier());
+                FunctionIdentifier aggFuncIdent = FunctionUtils.getBuiltinAggOrUDF(assignScalarAggExpr,
+                        (MetadataProvider) context.getMetadataProvider());
 
                 // Push the scalar aggregate function into the aggregate op.
                 int nArgs = assignScalarAggExpr.getArguments().size();
@@ -218,8 +219,8 @@ public class PushAggFuncIntoStandaloneAggregateRule implements IAlgebraicRewrite
                         new MutableObject<>(listifyCandidateExpr.getArguments().get(0).getValue().cloneExpression()));
                 aggArgs.addAll(OperatorManipulationUtil
                         .cloneExpressions(assignScalarAggExpr.getArguments().subList(1, nArgs)));
-                AggregateFunctionCallExpression aggFuncExpr =
-                        BuiltinFunctions.makeAggregateFunctionExpression(aggFuncIdent, aggArgs);
+                AggregateFunctionCallExpression aggFuncExpr = FunctionUtils.getBuiltinAggExprOrUDF(aggFuncIdent,
+                        aggArgs, (MetadataProvider) context.getMetadataProvider());
                 aggFuncExpr.setSourceLocation(assignScalarAggExpr.getSourceLocation());
 
                 LogicalVariable newVar = context.newVar();
@@ -251,18 +252,20 @@ public class PushAggFuncIntoStandaloneAggregateRule implements IAlgebraicRewrite
     }
 
     private void findScalarAggFuncExprRef(List<Mutable<ILogicalExpression>> exprRefs, LogicalVariable aggVar,
-            List<Mutable<ILogicalExpression>> outScalarAggExprRefs) {
+            List<Mutable<ILogicalExpression>> outScalarAggExprRefs, IOptimizationContext context)
+            throws AlgebricksException {
         for (Mutable<ILogicalExpression> exprRef : exprRefs) {
             ILogicalExpression expr = exprRef.getValue();
             if (expr.getExpressionTag() == LogicalExpressionTag.FUNCTION_CALL) {
                 AbstractFunctionCallExpression funcExpr = (AbstractFunctionCallExpression) expr;
-                FunctionIdentifier funcIdent = BuiltinFunctions.getAggregateFunction(funcExpr.getFunctionIdentifier());
+                FunctionIdentifier funcIdent =
+                        FunctionUtils.getBuiltinAggOrUDF(funcExpr, (MetadataProvider) context.getMetadataProvider());
                 if (funcIdent != null
                         && aggVar.equals(SqlppVariableUtil.getVariable(funcExpr.getArguments().get(0).getValue()))) {
                     outScalarAggExprRefs.add(exprRef);
                 } else {
                     // Recursively look in func args.
-                    findScalarAggFuncExprRef(funcExpr.getArguments(), aggVar, outScalarAggExprRefs);
+                    findScalarAggFuncExprRef(funcExpr.getArguments(), aggVar, outScalarAggExprRefs, context);
                 }
             }
         }

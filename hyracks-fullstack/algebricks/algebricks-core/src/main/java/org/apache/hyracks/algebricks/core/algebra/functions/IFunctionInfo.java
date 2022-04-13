@@ -58,4 +58,6 @@ public interface IFunctionInfo extends Serializable {
         sb.append(")");
         return sb.toString();
     }
+
+    boolean isPrivate();
 }

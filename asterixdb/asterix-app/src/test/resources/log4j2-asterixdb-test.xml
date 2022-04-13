@@ -32,6 +32,7 @@
     <Root level="WARN">
       <AppenderRef ref="InfoLog"/>
     </Root>
+
     <Logger name="org.apache.hyracks.control.nc.service" level="INFO"/>
     <Logger name="org.apache.hyracks" level="INFO"/>
     <Logger name="org.apache.asterix" level="INFO"/>
