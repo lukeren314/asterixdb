@@ -62,7 +62,7 @@ public class ExternalFunctionInfo extends FunctionInfo implements IExternalFunct
         this(finfo.getFunctionIdentifier(), finfo.getKind(), finfo.getParameterTypes(),
                 finfo.getReturnType(), finfo.getResultTypeComputer(), finfo.getLanguage(),
                 finfo.getLibraryDataverseName(), finfo.getLibraryName(), externalIdentifier, finfo.getResources(),
-                finfo.isFunctional(), finfo.getNullCall());
+                finfo.isFunctional(), finfo.getNullCall(), finfo.isPrivate());
     }
 
     @Override

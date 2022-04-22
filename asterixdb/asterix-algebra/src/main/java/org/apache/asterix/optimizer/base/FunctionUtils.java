@@ -34,12 +34,22 @@ public class FunctionUtils {
         FunctionSignature fSig = new FunctionSignature(fi);
         org.apache.asterix.metadata.entities.Function udf = mdPv.lookupUserDefinedFunction(fSig);
         if (udf != null) {
+            // TODO: split up step 1 and 2 as local and global aggregate
+            // find way to retrieve both
             IFunctionInfo finfo = ExternalFunctionCompilerUtil.getExternalFunctionInfo(mdPv, udf);
+
+            int offset = "agg-".length();
+            IFunctionInfo localFinfo = ExternalFunctionCompilerUtil.getExternalFunctionInfo(mdPv, mdPv.lookupUserDefinedFunction(addPrefix(fSig, "local-", offset)));
+            IFunctionInfo globalFinfo = ExternalFunctionCompilerUtil.getExternalFunctionInfo(mdPv, mdPv.lookupUserDefinedFunction(addPrefix(fSig, "global-", offset)));
             AggregateFunctionCallExpression expr = new AggregateFunctionCallExpression(finfo, true, args);
-            expr.setStepOneAggregate(finfo);
-            expr.setStepTwoAggregate(finfo);
+            expr.setStepOneAggregate(localFinfo);
+            expr.setStepTwoAggregate(globalFinfo);
             return expr;
         } else
             return BuiltinFunctions.makeAggregateFunctionExpression(fi, args);
+    }
+
+    private static FunctionSignature addPrefix(FunctionSignature fSig, String prefix, int offset) {
+        return new FunctionSignature(fSig.getDataverseName(), fSig.getName().substring(0, offset) + prefix + fSig.getName().substring(offset), fSig.getArity());
     }
 }

@@ -49,7 +49,13 @@ public class ExternalAggregateFunctionEvaluatorFactory implements IAggregateEval
     public IAggregateEvaluator createAggregateEvaluator(IEvaluatorContext ctx) throws HyracksDataException {
         switch (finfo.getLanguage()) {
             case PYTHON:
-                return new ExternalAggregatePythonFunctionEvaluator(finfo, args, argTypes, ctx, sourceLoc);
+                // TODO: MORE HACKINESS
+                if (finfo.getFunctionIdentifier().getName().startsWith("agg-local-")) {
+                    return new LocalExternalAggregatePythonFunctionEvaluator(finfo, args, argTypes, ctx, sourceLoc);
+                } else if (finfo.getFunctionIdentifier().getName().startsWith("agg-global-")) {
+                    return new GlobalExternalAggregatePythonFunctionEvaluator(finfo, args, argTypes, ctx, sourceLoc);
+                }
+                return new ScalarExternalAggregatePythonFunctionEvaluator(finfo, args, argTypes, ctx, sourceLoc);
             default:
                 throw new RuntimeDataException(ErrorCode.LIBRARY_EXTERNAL_FUNCTION_UNSUPPORTED_KIND,
                         finfo.getLanguage());

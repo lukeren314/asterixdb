@@ -135,14 +135,16 @@ public class ExternalPythonFunctionEvaluator {
         try {
             ByteBuffer res = libraryEvaluator.callPython(fnId, argTypes, argValues, nullCall);
             resultBuffer.reset();
-            wrap(res, resultBuffer.getDataOutput());
+            wrap(res, resultBuffer.getDataOutput(), true);
         } catch (Exception e) {
             throw new HyracksDataException("Error evaluating Python UDF", e);
         }
         result.set(resultBuffer);
     }
 
-    public void callPython(long fnId, boolean nullCall) throws HyracksDataException {
+    public void callInit(long fnId, boolean nullCall) throws HyracksDataException {
+        isMissing = false;
+        isNull = false;
         try {
             libraryEvaluator.callPython(fnId, new IAType[0], new IValueReference[0], nullCall);
         } catch (Exception e) {
@@ -150,7 +152,7 @@ public class ExternalPythonFunctionEvaluator {
         }
     }
 
-    public void callPython(long fnId, IAType[] argTypes, IScalarEvaluator[] argEvals, IFrameTupleReference tuple, boolean nullCall) throws HyracksDataException {
+    public void callStep(long fnId, IAType[] argTypes, IScalarEvaluator[] argEvals, IFrameTupleReference tuple, boolean nullCall) throws HyracksDataException {
         evaluateArguments(tuple, argEvals, nullCall);
         if (isMissing) {
             return;
@@ -165,7 +167,7 @@ public class ExternalPythonFunctionEvaluator {
         }
     }
 
-    public void callPython(long fnId, IPointable result, boolean nullCall) throws HyracksDataException {
+    public void callFinish(long fnId, IPointable result, boolean nullCall) throws HyracksDataException {
         if (isMissing) {
             PointableHelper.setMissing(result);
             return;
@@ -177,14 +179,15 @@ public class ExternalPythonFunctionEvaluator {
         try {
             ByteBuffer res = libraryEvaluator.callPython(fnId, new IAType[0], new IValueReference[0], nullCall);
             resultBuffer.reset();
-            wrap(res, resultBuffer.getDataOutput());
+            // TODO: if tagged is false, we get an NPE, but should it be false?
+            wrap(res, resultBuffer.getDataOutput(), true);
         } catch (Exception e) {
             throw new HyracksDataException("Error evaluating Python UDF", e);
         }
         result.set(resultBuffer);
     }
 
-    private void wrap(ByteBuffer resultWrapper, DataOutput out) throws HyracksDataException {
+    private void wrap(ByteBuffer resultWrapper, DataOutput out, boolean tagged) throws HyracksDataException {
         //TODO: output wrapper needs to grow with result wrapper
         outputWrapper.clear();
         outputWrapper.position(0);
@@ -199,7 +202,7 @@ public class ExternalPythonFunctionEvaluator {
             }
             int numresults = resultWrapper.get() ^ FIXARRAY_PREFIX;
             if (numresults > 0) {
-                unpackerToADM.unpack(resultWrapper, out, true);
+                unpackerToADM.unpack(resultWrapper, out, tagged);
             }
             unpackerInput.reset(resultWrapper.array(), resultWrapper.position() + resultWrapper.arrayOffset(),
                     resultWrapper.remaining());
