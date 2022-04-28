@@ -2933,6 +2933,23 @@ public class QueryTranslator extends AbstractLangTranslator implements IStatemen
                         cfs.getDeterministic(), cfs.getResources(), dependencies);
                 MetadataManager.INSTANCE.addFunction(mdTxnCtx, realAggFunction);
 
+                Function localAggFunction = new Function(
+                        new FunctionSignature(functionSignature.getDataverseName(),
+                                "agg-local-" + functionSignature.getName(), functionSignature.getArity()),
+                        paramNames, paramTypes, returnTypeSignature, null, functionKind, library.getLanguage(),
+                        libraryDataverseName, libraryName, externalIdentifier, cfs.getNullCall(),
+                        cfs.getDeterministic(), cfs.getResources(), dependencies);
+                MetadataManager.INSTANCE.addFunction(mdTxnCtx, localAggFunction);
+
+
+                Function globalAggFunction = new Function(
+                        new FunctionSignature(functionSignature.getDataverseName(),
+                                "agg-global-" + functionSignature.getName(), functionSignature.getArity()),
+                        paramNames, paramTypes, returnTypeSignature, null, functionKind, library.getLanguage(),
+                        libraryDataverseName, libraryName, externalIdentifier, cfs.getNullCall(),
+                        cfs.getDeterministic(), cfs.getResources(), dependencies);
+                MetadataManager.INSTANCE.addFunction(mdTxnCtx, globalAggFunction);
+
                 function = new Function(functionSignature, paramNames, paramTypes, returnTypeSignature, null,
                         functionKind, library.getLanguage(), libraryDataverseName, libraryName, externalIdentifier,
                         cfs.getNullCall(), cfs.getDeterministic(), cfs.getResources(), dependencies);
