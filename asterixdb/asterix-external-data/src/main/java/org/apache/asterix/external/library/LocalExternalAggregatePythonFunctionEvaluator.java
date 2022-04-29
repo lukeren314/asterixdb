@@ -25,6 +25,8 @@ import org.apache.hyracks.algebricks.runtime.base.IEvaluatorContext;
 import org.apache.hyracks.algebricks.runtime.base.IScalarEvaluatorFactory;
 import org.apache.hyracks.api.exceptions.HyracksDataException;
 import org.apache.hyracks.api.exceptions.SourceLocation;
+import org.apache.hyracks.data.std.api.IPointable;
+import org.apache.hyracks.dataflow.common.data.accessors.IFrameTupleReference;
 
 public class LocalExternalAggregatePythonFunctionEvaluator extends AbstractExternalAggregatePythonFunctionEvaluator {
     private static final String INIT_IDENTIFIER = "init";
@@ -33,6 +35,21 @@ public class LocalExternalAggregatePythonFunctionEvaluator extends AbstractExter
 
     public LocalExternalAggregatePythonFunctionEvaluator(IExternalFunctionInfo finfo, IScalarEvaluatorFactory[] args, IAType[] argTypes, IEvaluatorContext ctx, SourceLocation sourceLoc) throws HyracksDataException {
         super(finfo, args, argTypes, ctx, sourceLoc);
+    }
+
+    @Override
+    public void init() throws HyracksDataException {
+        super.init();
+    }
+
+    @Override
+    public void step(IFrameTupleReference tuple) throws HyracksDataException {
+        super.step(tuple);
+    }
+
+    @Override
+    public void finish(IPointable result) throws HyracksDataException {
+        super.finish(result);
     }
 
     @Override
