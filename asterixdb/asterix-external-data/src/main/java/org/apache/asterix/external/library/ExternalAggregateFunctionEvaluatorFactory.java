@@ -20,6 +20,7 @@ package org.apache.asterix.external.library;
 
 import org.apache.asterix.common.exceptions.ErrorCode;
 import org.apache.asterix.common.exceptions.RuntimeDataException;
+import org.apache.asterix.common.functions.AggregateFunctionSignature;
 import org.apache.asterix.om.functions.IExternalFunctionInfo;
 import org.apache.asterix.om.types.IAType;
 import org.apache.hyracks.algebricks.runtime.base.IAggregateEvaluator;
@@ -49,10 +50,9 @@ public class ExternalAggregateFunctionEvaluatorFactory implements IAggregateEval
     public IAggregateEvaluator createAggregateEvaluator(IEvaluatorContext ctx) throws HyracksDataException {
         switch (finfo.getLanguage()) {
             case PYTHON:
-                // TODO: MORE HACKINESS
-                if (finfo.getFunctionIdentifier().getName().startsWith("agg-local-")) {
+                if (AggregateFunctionSignature.isLocal(finfo.getFunctionIdentifier())) {
                     return new LocalExternalAggregatePythonFunctionEvaluator(finfo, args, argTypes, ctx, sourceLoc);
-                } else if (finfo.getFunctionIdentifier().getName().startsWith("agg-global-")) {
+                } else if (AggregateFunctionSignature.isGlobal(finfo.getFunctionIdentifier())) {
                     return new GlobalExternalAggregatePythonFunctionEvaluator(finfo, args, argTypes, ctx, sourceLoc);
                 }
                 return new ScalarExternalAggregatePythonFunctionEvaluator(finfo, args, argTypes, ctx, sourceLoc);

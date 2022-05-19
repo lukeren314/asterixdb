@@ -22,6 +22,7 @@ import org.apache.asterix.common.api.IApplicationContext;
 import org.apache.asterix.common.config.CompilerProperties;
 import org.apache.asterix.common.exceptions.AsterixException;
 import org.apache.asterix.common.exceptions.ErrorCode;
+import org.apache.asterix.common.functions.AggregateFunctionSignature;
 import org.apache.asterix.om.functions.IExternalFunctionDescriptor;
 import org.apache.asterix.om.functions.IExternalFunctionInfo;
 import org.apache.asterix.runtime.functions.FunctionTypeInferers;
@@ -47,8 +48,7 @@ public class ExternalFunctionDescriptorProvider {
             case SCALAR:
                 return new ExternalScalarFunctionDescriptor(finfo);
             case AGGREGATE:
-                //TODO: !!!!!FILTHY, WRETCHED HACK
-                if (finfo.getFunctionIdentifier().getName().startsWith("agg-")) {
+                if (AggregateFunctionSignature.isAgg(finfo.getFunctionIdentifier())) {
                     return new ExternalAggregateFunctionDescriptor(finfo);
                 } else {
                     return new ScalarExternalAggregateDescriptor(new ExternalAggregateFunctionDescriptorFactory(finfo));

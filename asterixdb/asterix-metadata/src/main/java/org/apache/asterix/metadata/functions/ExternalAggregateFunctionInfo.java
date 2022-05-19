@@ -21,6 +21,7 @@ package org.apache.asterix.metadata.functions;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.asterix.common.functions.AggregateFunctionSignature;
 import org.apache.asterix.common.functions.ExternalFunctionLanguage;
 import org.apache.asterix.common.metadata.DataverseName;
 import org.apache.asterix.om.functions.ExternalFunctionInfo;
